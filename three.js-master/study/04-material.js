@@ -1,7 +1,5 @@
 import * as THREE from "../build/three.module.js";
-import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
-import { FontLoader } from '../examples/jsm/loaders/FontLoader.js';
-import {TextGeometry} from "../examples/jsm/geometries/TextGeometry.js";
+import { OrbitControls } from "../examples/jsm/controls/OrbitControls.js";
 
 class App {
   constructor() {
@@ -40,7 +38,7 @@ class App {
       0.1,
       100
     );
-    camera.position.z = 15;
+    camera.position.z = 7;
     this._camera = camera;
   }
 
@@ -53,39 +51,24 @@ class App {
   }
 
   _setupModel() {
-    const fontLoader = new FontLoader();
-    async function loadFont(that) {
-      const url ="../examples/fonts/helvetiker_regular.typeface.json";
-      const font = await new Promise((resolve, reject) => {
-        fontLoader.load(url, resolve, undefined, reject);
-      });
+    const vertices = [
+      -1, 1, 0,
+      1, 1, 0,
+      -1, -1, 0,
+      1, -1, 0,
+    ];
 
-      const geometry = new TextGeometry("Free.js is very funny", {
-        font: font,
-        size: 3,
-        height: 1.5,
-        curveSegments: 4,
-        bevelEnabled: true, 
-        bevelThickness: 0.7,
-        bevelSize: .7,
-        bevelSegment: 2
-      });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 
-      const fillMaterial = new THREE.MeshPhongMaterial({color: 0x515151});
-      const cube = new THREE.Mesh(geometry, fillMaterial);
-
-      const lineMaterial = new THREE.LineBasicMaterial({color: 0xffff00});
-      const line = new THREE.LineSegments(
-        new THREE.WireframeGeometry(geometry), lineMaterial
-      );
-      const group = new THREE.Group();
-      group.add(cube);
-      group.add(line);
-
-      that._scene.add(group);
-      that._cube = group;
-    };
-    loadFont(this);
+    const material= new THREE.LineDashedMaterial({
+      color: 0xffff00,
+      dashSize: 4,
+      gapSize: 5,
+      scale: 1,
+    }) // 선에 대한 색상만 지정, 굵기는 지정가능하지만 반영 안됨
+    const line = new THREE.LineLoop(geometry, material);
+    this._scene.add(line); 
   }
 
   resize() {
@@ -100,14 +83,12 @@ class App {
 
   render(time) {
     this._renderer.render(this._scene, this._camera);
-    //this.update(time);
+    this.update(time);
     requestAnimationFrame(this.render.bind(this));
   }
 
   update(time) {
     time *= 0.001;
-    this._cube.rotation.x = time;
-    this._cube.rotation.y = time;
   }
 }
 

@@ -1,7 +1,4 @@
 import * as THREE from "../build/three.module.js";
-import {OrbitControls} from "../examples/jsm/controls/OrbitControls.js";
-import { FontLoader } from '../examples/jsm/loaders/FontLoader.js';
-import {TextGeometry} from "../examples/jsm/geometries/TextGeometry.js";
 
 class App {
   constructor() {
@@ -19,16 +16,11 @@ class App {
     this._setupCamera();
     this._setupLight();
     this._setupModel();
-    this._setupControls();
 // private이 js에는 없어서 _로 App 내부에서만 사용하는 메소드 혹은 필드로 약속
     window.onresize = this.resize.bind(this);
     this.resize();
 // resize는 renderer나 camera는 창크기가 변경될때 속성값을 재설정해주기 위해서
     requestAnimationFrame(this.render.bind(this));
-  }
-
-  _setupControls() {
-    new OrbitControls(this._camera, this._divContainer);
   }
 
   _setupCamera() {
@@ -40,7 +32,7 @@ class App {
       0.1,
       100
     );
-    camera.position.z = 15;
+    camera.position.z = 25;
     this._camera = camera;
   }
 
@@ -53,39 +45,46 @@ class App {
   }
 
   _setupModel() {
-    const fontLoader = new FontLoader();
-    async function loadFont(that) {
-      const url ="../examples/fonts/helvetiker_regular.typeface.json";
-      const font = await new Promise((resolve, reject) => {
-        fontLoader.load(url, resolve, undefined, reject);
-      });
+    const solarSystem = new THREE.Object3D();
+    this._scene.add(solarSystem);
 
-      const geometry = new TextGeometry("Free.js is very funny", {
-        font: font,
-        size: 3,
-        height: 1.5,
-        curveSegments: 4,
-        bevelEnabled: true, 
-        bevelThickness: 0.7,
-        bevelSize: .7,
-        bevelSegment: 2
-      });
+    const radius = 1;
+    const widthSegments = 12;
+    const heightSegments = 12;
+    const sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+    const sunMaterial = new THREE.MeshPhongMaterial({
+      emissive: 0xffff00, flatShading: true
+    });
+    const sunMesh = new THREE.Mesh(sphereGeometry, sunMaterial);
+    sunMesh.scale.set(3, 3, 3);
+    solarSystem.add(sunMesh);
 
-      const fillMaterial = new THREE.MeshPhongMaterial({color: 0x515151});
-      const cube = new THREE.Mesh(geometry, fillMaterial);
+    const earthOrbit = new THREE.Object3D();
+    solarSystem.add(earthOrbit);
 
-      const lineMaterial = new THREE.LineBasicMaterial({color: 0xffff00});
-      const line = new THREE.LineSegments(
-        new THREE.WireframeGeometry(geometry), lineMaterial
-      );
-      const group = new THREE.Group();
-      group.add(cube);
-      group.add(line);
+    const earthMaterial = new THREE.MeshPhongMaterial({
+      color: 0x2233ff, emissive: 0x112244, flatShading: true,
+    });
 
-      that._scene.add(group);
-      that._cube = group;
-    };
-    loadFont(this);
+    const earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
+    earthOrbit.position.x = 10;
+    earthOrbit.add(earthMesh);
+
+    const moonOrbit = new THREE.Object3D();
+    moonOrbit.position.x = 2;
+    earthOrbit.add(moonOrbit);
+
+    const moonMaterial = new THREE.MeshPhongMaterial({
+      color: 0x888888, emissive: 0x222222, flatShading: true,
+    });
+
+    const moonMesh = new THREE.Mesh(sphereGeometry, moonMaterial);
+    moonMesh.scale.set(.5, .5, .5);
+    moonOrbit.add(moonMesh);
+
+    this._solarSystem = solarSystem;
+    this._earthOrbit = earthOrbit;
+    this._moonOrbit = moonOrbit;
   }
 
   resize() {
@@ -100,14 +99,17 @@ class App {
 
   render(time) {
     this._renderer.render(this._scene, this._camera);
-    //this.update(time);
+    this.update(time);
     requestAnimationFrame(this.render.bind(this));
   }
 
   update(time) {
     time *= 0.001;
-    this._cube.rotation.x = time;
-    this._cube.rotation.y = time;
+    this._solarSystem.rotation.y = time / 2;
+    this._earthOrbit.rotation.y = time * 2;
+    this._moonOrbit.rotation.y = time * 10;
+    this._moonOrbit.rotation.x = time * 5;
+    this._moonOrbit.rotation.z = time * 210;
   }
 }
 
