@@ -38,7 +38,7 @@ class App {
       0.1,
       100
     );
-    camera.position.z = 7;
+    camera.position.z = 3;
     this._camera = camera;
   }
 
@@ -51,24 +51,39 @@ class App {
   }
 
   _setupModel() {
-    const vertices = [
-      -1, 1, 0,
-      1, 1, 0,
-      -1, -1, 0,
-      1, -1, 0,
-    ];
+    const textureLoader = new THREE.TextureLoader();
+    const map = textureLoader.load(
+      "../examples/textures/uv_grid_opengl.jpg",
+      texture => {
+        texture.repeat.x = 1;
+        texture.repeat.y = 1;
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
 
-    const material= new THREE.LineDashedMaterial({
-      color: 0xffff00,
-      dashSize: 4,
-      gapSize: 5,
-      scale: 1,
-    }) // 선에 대한 색상만 지정, 굵기는 지정가능하지만 반영 안됨
-    const line = new THREE.LineLoop(geometry, material);
-    this._scene.add(line); 
+        texture.offset.x = 0;
+        texture.offset.y = 0;
+
+        texture.rotation = THREE.MathUtils.degToRad(45);
+        texture.center.x = 0.5;
+        texture.center.y = 0.5;
+
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.NearestMipmapLinearFilter
+      }
+      );
+    const material = new THREE.MeshStandardMaterial({
+      map,
+    })
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+    
+    box.position.set(-1, 0, 0);
+    this._scene.add(box);
+
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), material);
+
+    sphere.position.set(1, 0, 0);
+    this._scene.add(sphere);
   }
 
   resize() {
